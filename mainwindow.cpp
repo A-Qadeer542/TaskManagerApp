@@ -89,7 +89,35 @@ void MainWindow::handleDeleteTask() {
 
 
 void MainWindow::handleSaveTasks() {
-    // Check if we are in the task selection phase
+    // Check the number of tasks in the list
+    int taskCount = ui->taskList->count();
+
+    if (taskCount == 0) {
+        QMessageBox::information(this, "Save Tasks", "There are no tasks to save.");
+        return; // Exit if no tasks are in the list
+    }
+
+    if (taskCount == 1) {
+        // If there's only 1 task, save it directly
+        QString fileName = QFileDialog::getSaveFileName(this, "Save Task File", "", "Text Files (*.txt);;All Files (*)");
+        if (fileName.isEmpty()) {
+            QMessageBox::information(this, "Save Tasks", "No file name specified.");
+            return; // Exit if no file name is provided
+        }
+
+        QFile file(fileName);
+        if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+            QTextStream out(&file);
+            out << ui->taskList->item(0)->text() << "\n"; // Save the single task
+            file.close();
+            QMessageBox::information(this, "Save Tasks", "Task saved successfully to " + fileName);
+        } else {
+            QMessageBox::warning(this, "Error", "Could not save the task to the specified file.");
+        }
+        return; // Exit after saving the single task
+    }
+
+    // If there are multiple tasks, proceed with the usual logic
     if (ui->taskList->selectionMode() == QAbstractItemView::MultiSelection) {
         // User has already been prompted to select tasks; now check for selected items
         QList<QListWidgetItem*> selectedItems = ui->taskList->selectedItems();
@@ -166,8 +194,6 @@ void MainWindow::handleSaveTasks() {
         return; // Exit here to let the user select tasks
     }
 }
-
-
 
 void MainWindow::handleLoadTasks() {
     QString fileName = QFileDialog::getOpenFileName(this, "Open Task File", "", "Text Files (*.txt);;All Files (*)");
